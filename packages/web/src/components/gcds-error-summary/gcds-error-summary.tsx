@@ -170,12 +170,28 @@ export class GcdsErrorSummary {
    * Focus element on error link click with label visible
    */
   focusElement(id) {
-    const element = document.querySelector(id);
+    const targetId = id.replace('#', '');
+    const element = document.getElementById(targetId);
 
-    const target = `[for=${id.replace('#', '')}]`;
+    if (element) {
+      element
+        .closest('form')
+        ?.querySelector(`[for="${CSS.escape(targetId)}"]`)
+        ?.scrollIntoView();
+      element.focus();
+      return;
+    }
 
-    element.closest('form').querySelector(target)?.scrollIntoView();
-    element.focus();
+    // Form components render their form control inside their shadow root
+    const scope = this.el.closest('form') ?? document;
+    const host = Array.from(scope.querySelectorAll('*')).find(el =>
+      el.shadowRoot?.getElementById(targetId),
+    );
+
+    if (host) {
+      host.scrollIntoView();
+      host.shadowRoot.getElementById(targetId).focus();
+    }
   }
 
   /*

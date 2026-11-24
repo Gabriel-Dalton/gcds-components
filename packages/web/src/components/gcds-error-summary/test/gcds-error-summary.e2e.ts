@@ -82,6 +82,85 @@ test.describe('gcds-error-summary', () => {
     ).toEqual(4);
   });
 
+  test('error links focus form components by their form control id', async ({
+    page,
+  }) => {
+    const errors = [];
+    page.on('pageerror', error => errors.push(error));
+
+    const form = page.locator('form');
+    await form.waitFor({ state: 'hidden' });
+
+    await form.evaluate(el => {
+      el.insertAdjacentHTML(
+        'beforeend',
+        `<gcds-input label="Input" name="input" input-id="input-id"></gcds-input>
+        <gcds-input label="Email" name="email" input-id="1-email"></gcds-input>
+        <gcds-textarea label="Textarea" name="textarea" textarea-id="textarea-id"></gcds-textarea>
+        <gcds-select label="Select" name="select" select-id="select-id" default-value="Select an option">
+          <option value="1">Option 1</option>
+        </gcds-select>
+        <gcds-file-uploader label="File" name="file" uploader-id="uploader-id"></gcds-file-uploader>
+        <gcds-radios legend="Radios" name="radios" options='[{ "label": "Radio 1", "id": "radio1", "value": "radio1"}, { "label": "Radio 2", "id": "radio2", "value": "radio2"}]'></gcds-radios>
+        <gcds-checkboxes legend="Checkboxes" name="checkboxes" options='[{ "label": "Checkbox 1", "id": "check1", "value": "check1"}, { "label": "Checkbox 2", "id": "check2", "value": "check2"}]'></gcds-checkboxes>
+        <gcds-date-input id="date-input" legend="Date" name="date" format="full"></gcds-date-input>`,
+      );
+
+      (
+        el.querySelector('gcds-error-summary') as HTMLGcdsErrorSummaryElement
+      ).errorLinks = {
+        '#input-id': 'Input error',
+        '#1-email': 'Email error',
+        '#textarea-id': 'Textarea error',
+        '#select-id': 'Select error',
+        '#uploader-id': 'File error',
+        '#radio2': 'Radios error',
+        '#check2': 'Checkboxes error',
+        '#date-input': 'Date error',
+        '#missing-id': 'Missing error',
+      };
+    });
+
+    await page.waitForChanges();
+
+    // Ids of the focused host element and the focused element inside it
+    const getFocusedElementIds = () =>
+      page.evaluate(() => {
+        let active = document.activeElement;
+        const ids = [active.id];
+        while (active.shadowRoot?.activeElement) {
+          active = active.shadowRoot.activeElement;
+          ids.push(active.id);
+        }
+        return ids;
+      });
+
+    const expected = {
+      'Input error': 'input-id',
+      'Email error': '1-email',
+      'Textarea error': 'textarea-id',
+      'Select error': 'select-id',
+      'File error': 'uploader-id',
+      'Radios error': 'radio2',
+      'Checkboxes error': 'check2',
+      'Date error': 'date-input',
+    };
+
+    for (const [label, id] of Object.entries(expected)) {
+      await page
+        .locator('gcds-error-summary gcds-link', { hasText: label })
+        .click();
+      await expect.poll(getFocusedElementIds).toContain(id);
+    }
+
+    await page
+      .locator('gcds-error-summary gcds-link', { hasText: 'Missing error' })
+      .click();
+    await page.waitForTimeout(200);
+
+    expect(errors).toEqual([]);
+  });
+
   test('list markers use the same responsive typography as links', async ({
     page,
   }) => {
