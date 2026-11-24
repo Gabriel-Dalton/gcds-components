@@ -612,12 +612,10 @@ export class GcdsFileUploader {
 
           {value.length > 0
             ? value.map(file => (
-              <div
-                class="file-uploader__uploaded-file"
-                aria-label={`${i18n[lang].removeFile} ${file}.`}
-              >
+              <div class="file-uploader__uploaded-file">
                 <gcds-text margin-bottom="0">{file}</gcds-text>
                 <button
+                  aria-label={`${i18n[lang].removeFile} ${file}`}
                   onClick={e => this.removeFile(e)}
                   ref={element => {
                     if (element && !this.uploadedFiles.includes(element)) {

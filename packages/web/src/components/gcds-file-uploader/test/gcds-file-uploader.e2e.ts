@@ -67,6 +67,40 @@ test.describe('gcds-file-uploader', () => {
       ),
     ).toBe(2);
   });
+  test('remove buttons are named with their file', async ({ page }) => {
+    const element = page.locator('gcds-file-uploader');
+
+    // Wait for element to attach and become visible, allowing up to 10s
+    await element.waitFor({ state: 'attached' });
+    await element.waitFor({ state: 'visible' });
+    await element.waitFor({ timeout: 10000 });
+
+    const fileInput = page.locator('input[type="file"]');
+
+    fileInput.setInputFiles([
+      path.resolve(
+        './www/components/gcds-file-uploader/test/gcds-file-uploader.e2e.html',
+      ),
+      path.resolve(
+        './www/components/gcds-date-input/test/gcds-date-input.e2e.html',
+      ),
+    ]);
+
+    await page.waitForChanges();
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Remove file gcds-file-uploader.e2e.html',
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {
+        name: 'Remove file gcds-date-input.e2e.html',
+        exact: true,
+      }),
+    ).toBeVisible();
+  });
   test('upload and remove file', async ({ page }) => {
     const element = page.locator('gcds-file-uploader');
 
